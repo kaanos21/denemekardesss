@@ -1,4 +1,5 @@
 ﻿using denemekardesss.DTOs;
+using denemekardesss.Services.Abstract;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,24 +7,19 @@ using Microsoft.EntityFrameworkCore;
 public class ProductController : ControllerBase
 {
 	private readonly StajProjectContext _context;
+	private readonly IProductService _productService;
 
-	public ProductController(StajProjectContext context)
+	public ProductController(StajProjectContext context, IProductService productService)
 	{
 		_context = context;
+		_productService = productService;
 	}
 
 
 	[HttpGet("Food List")]
-	public IActionResult FoodList()
+	public async Task<IActionResult> FoodList()
 	{
-		var c = new StajProjectContext();
-
-		var response = c.Foods.Select(x => new FoodDTO
-		{
-			FoodID = x.Id,
-			CategoryID = x.CategoryId,
-			CategoryName = x.Category.Name ?? ""
-		}).ToList();
+		var response = await _productService.GetFoods();
 
 		return Ok(response);
 	}
@@ -50,21 +46,48 @@ public class ProductController : ControllerBase
 		}
 	}
 	[HttpPost("Hesap Kurma")]
-	public IActionResult GetMenu(User u)
+	public IActionResult GetMenu(CreateAccountDTO dto)
 	{
 		using var c = new StajProjectContext();
-		c.Add(u);
+		var user = new User
+		{
+			UserName = dto.UserName,
+			UserPassword = dto.Password,
+			UserMoney = dto.UserMoney
+		};
+		c.Add(user);
 		c.SaveChanges();
-		return Created("", u);
+		return Created("", dto);
 	}
 
 	
 
+
+
+
+
+
 	[HttpGet("Category Name Search")]
-	public IActionResult CategorySearch(string name)
+	public IActionResult CategorySearch(CategoryNameSearchDTO DTOO)
 	{
 		var c = new StajProjectContext();
-		var catt = c.Categories.Where(x => x.Name.Contains(name)).ToList();
+		var catt = c.Categories.Where(x => x.Name.Contains(DTOO.CategoryName)).ToList();
+		if (catt == null || !catt.Any())
+		{
+			return NotFound();
+		}
+		else
+		{
+			
+			return Ok(catt);
+		}
+	}
+
+	[HttpGet("Category Name Search Just return Name")]
+	public IActionResult CategorySearchhh(string name)
+	{
+		var c = new StajProjectContext();
+		var catt = c.Categories.Where(x => x.Name.Contains(name)).Select(x => x.Name).ToList();
 		if (catt == null || !catt.Any())
 		{
 			return NotFound();
@@ -75,23 +98,30 @@ public class ProductController : ControllerBase
 		}
 	}
 
-	[HttpPost("Kategori Ekleme")]
-	public IActionResult KategoriEkleme(string CategoryName)
+
+	[HttpPost("Kategori Ekleme22")]
+	public IActionResult KategoriEkleme(CategoryDTO dto)
 	{
 		var c = new StajProjectContext();
-		var category = new Category { Name = CategoryName };
-		c.Categories.Add(category);
+		var category = new Category
+		{
+			Name = dto.CategoryName
+		};
+		c.Add(category);
 		c.SaveChanges();
-		return Ok(category);
+		return Ok(dto);
 	}
 	[HttpPost("Menü Ekleme")]
-	public IActionResult Menuekleme(string MenuName)
+	public IActionResult Menuekleme(MenuAddDTO dto)
 	{
 		var c = new StajProjectContext();
-		var menuu = new MenuName { MenuName1 = MenuName };
-		c.MenuNames.Add(menuu);
+		var menuname = new MenuName
+		{
+			MenuName1 = dto.MenuName
+		};
+		c.Add(menuname);
 		c.SaveChanges();
-		return Ok(menuu);
+		return Ok(dto);
 	}
 	
 
@@ -130,101 +160,20 @@ public class ProductController : ControllerBase
 		c.Foods.Add(food);
 		c.SaveChanges();
 
-		return Ok(food);
-	}
-	[HttpPost("Make a Order24234")]
-	public IActionResult Sıparısver(short Userordıd,short fooood,short yemek)
-	{
-		int i;
-		for (i = 0;  i < 4; i++)
-		{
-			var c = new StajProjectContext();
-			var aa = c.Foods.Select(x => new OrderDTO
-			{
-				UserIdOrder = Userordıd,
-				Foods = fooood
-			}) ;
-		}
-
-		return Ok();
-
-		/*var aa = c.Foods.Select(x => new
-		{
-
-		});
-		
-		var order = c.Orders.Select(x => new OrderDTO
-		{
-            UserIdOrder=Userordıd,
-			Foods=fooood
-		});*/
-
-
+		return Ok(foodAddDTO);
 	}
 
 
-	[HttpPost("Make a Order")]
-	public IActionResult SiparisVer(short UserordId, Array fooood)
-	{
-		var c = new StajProjectContext();
-
-		// Yeni bir Order nesnesi oluştur
-		var order = new Order
-		{
-			Time = DateTime.Now,
-			OrderSituationId = 1,
-			UserId = UserordId
-		};
-		var value = c.OrderLists.FirstOrDefault();
-		if (value != null)
-		{
-			var FoodId = value.FoodId;
-		}
+	
 
 
-		// Order nesnesini veritabanına ekle
-		c.Orders.Add(order);
-		c.SaveChanges();
-
-		return Ok(order);
-	}
+	
 
 
-	[HttpPost("Make aa yapay zeka Order")]
-	public IActionResult SiparisVer(short userId, List<short> foodIds)
-	{
-		var c = new StajProjectContext();
-
-		foreach (var foodId in foodIds)
-		{
-			// Yeni bir Order nesnesi oluştur
-			var order = new Order
-			{
-				Time = DateTime.Now,
-				OrderSituationId = 1,
-				UserId = userId
-			};
-
-			// Yeni bir OrderList nesnesi oluştur
-			var orderList = new OrderList
-			{
-				OrderId = order.Id,
-				FoodId = foodId
-			};
-
-			// Order ve OrderList nesnelerini veritabanına ekle
-			c.Orders.Add(order);
-			c.OrderLists.Add(orderList);
-		}
-
-		// Değişiklikleri kaydet
-		c.SaveChanges();
-
-		return Ok();
-	}
+	
 
 
-	[HttpPost("Make a Orderslkfgmhmf")]
+	[HttpPost("Make a Orderslkfgmhmf GÜNCEL GÜNCEL GÜNCEL")]
 	public IActionResult SiparisVerrrr3r(short userId, List<short> foodIds)
 	{
 		var c = new StajProjectContext();
@@ -280,34 +229,98 @@ public class ProductController : ControllerBase
 	}
 	
 	 */
+	[HttpPost("Make a Orderslkfgmhmf GÜNCEL GÜNCEL GÜNCEL222222222222222")]
+	public IActionResult SiparisVerr([FromBody] OrderDTO orderDTO)
+	{
+		var c = new StajProjectContext();
 
+		foreach (var foodId in orderDTO.FoodIds)
+		{
+			// Yeni bir Order nesnesi oluştur
+			var order = new Order
+			{
+				Time = DateTime.Now,
+				OrderSituationId = 1,
+				UserId = orderDTO.UserId
+			};
+
+			// Order nesnesini veritabanına ekle
+			c.Orders.Add(order);
+			c.SaveChanges();  // Bu satırı ekleyin
+
+			// Yeni bir OrderList nesnesi oluştur
+			var orderList = new OrderList
+			{
+				OrderId = order.Id,  // Bu satırı değiştirin
+				FoodId = foodId
+			};
+
+			// OrderList nesnesini veritabanına ekle
+			c.OrderLists.Add(orderList);
+		}
+
+		// Değişiklikleri kaydet
+		c.SaveChanges();
+
+		return Ok();
+	}
 
 
 
 
 	[HttpPut("Durum Güncelleme")]
-	  public IActionResult UpdateOrderName(int id, short newName)
-{
+	  public IActionResult UpdateOrderName(OrderUpdateDTO dto)
+      {
 		var context = new StajProjectContext();
     
-        var order = context.Orders.FirstOrDefault(o => o.Id == id);
+        var order = context.Orders.FirstOrDefault(o => o.Id == dto.OrderID);
 		
         if (order != null)
         {
-            order.OrderSituationId = newName;
+            order.OrderSituationId = dto.OrderstationID;
             context.SaveChanges();
-            return Ok(order);
+            return Ok(dto);
         }
         else
         {
             return NotFound();
         }
     
-}
-	 
+      }
 
+	[HttpPut("Kullanıcı Para Yükleme")]
 
+	public IActionResult UserMoneyyyy(UserMoneyTransactionsDTO Dto)
+	{
+		var context = new StajProjectContext();
+		var sorgu = from x in context.Users where x.UserName == Dto.Username && x.UserPassword == Dto.UserPassword select x;
 
+		if (sorgu.Any())
+		{
+
+			var a=context.Users.FirstOrDefault(x => x.UserName == Dto.Username);
+
+			a.UserMoney = a.UserMoney+Dto.UserMoney;
+		}
+		context.SaveChanges();
+		return Ok(Dto);
+	}
+	[HttpPut("Para Çekme")]
+	public IActionResult UserMoneyyyy454(UserMoneyTransactionsDTO Dto)
+	{
+		var context = new StajProjectContext();
+		var sorgu = from x in context.Users where x.UserName == Dto.Username && x.UserPassword == Dto.UserPassword select x;
+
+		if (sorgu.Any())
+		{
+
+			var a = context.Users.FirstOrDefault(x => x.UserName == Dto.Username);
+
+			a.UserMoney = a.UserMoney - Dto.UserMoney;
+		}
+		context.SaveChanges();
+		return Ok(Dto);
+	}
 
 }
 

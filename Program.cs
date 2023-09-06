@@ -1,4 +1,6 @@
 global using denemekardesss.Models;
+using denemekardesss.Services.Abstract;
+using denemekardesss.Services.Concrate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<StajProjectContext>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

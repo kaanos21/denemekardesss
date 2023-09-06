@@ -3,10 +3,9 @@
 	public class OrderDTO
 	{
 
-        public short UserIdOrder { get; set; }
-		
-		public short Foods { get; set; }
-		
+		public short UserId { get; set; }
+		public List<short> FoodIds { get; set; }
 
-    }
+
+	}
 }
