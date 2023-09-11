@@ -14,5 +14,6 @@ namespace denemekardesss.Models
         public string? MenuName1 { get; set; }
 
         public virtual ICollection<Food> Foods { get; set; }
+        aa
     }
 }
